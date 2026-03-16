@@ -81,4 +81,8 @@ public class PortfolioService {
 
         return result;
     }
+
+    public void saveModelFund(ModelFund fund) {
+        repo.upsertModelFund(fund);
+    }
 }

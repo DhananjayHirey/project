@@ -43,4 +43,23 @@ public class PortfolioRepository {
                 new BeanPropertyRowMapper<>(ModelFund.class)
         );
     }
+
+    public void upsertModelFund(ModelFund fund) {
+
+        String sql = """
+        INSERT INTO _model_funds (fund_id, fund_name, asset_class, allocation_pct)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT (fund_id)
+        DO UPDATE SET
+            fund_name = EXCLUDED.fund_name,
+            asset_class = EXCLUDED.asset_class,
+            allocation_pct = EXCLUDED.allocation_pct
+    """;
+
+        jdbc.update(sql,
+                fund.getFundId(),
+                fund.getFundName(),
+                fund.getAssetClass(),
+                fund.getAllocationPct());
+    }
 }
