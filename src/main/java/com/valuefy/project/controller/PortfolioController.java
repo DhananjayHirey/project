@@ -26,7 +26,7 @@ public class PortfolioController {
     }
 
     // Advisor's recommended plan
-    @GetMapping("/api/model-funds")
+    @GetMapping("/model-funds")
     public List<ModelFund> getModelFunds() {
 
         return service.getModelFunds();
@@ -40,7 +40,7 @@ public class PortfolioController {
 
 
 
-        @PostMapping("/api/model-funds")
+        @PostMapping("/model-funds")
         public String saveModelFund(@RequestBody ModelFund fund) {
 
             service.saveModelFund(fund);
