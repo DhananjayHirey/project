@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Portfolio Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 40px;
+            background: #f5f5f5;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: white;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .buy {
+            color: green;
+            font-weight: bold;
+        }
+
+        .sell {
+            color: red;
+            font-weight: bold;
+        }
+
+        .review {
+            background: #ffe9e9;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .summary {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <h1>Client Portfolio Dashboard</h1>
+
+    Client ID:
+    <input id="clientId" value="C001" />
+
+    <button onclick="loadRebalance()">Rebalance Comparison</button>
+    <button onclick="loadHoldings()">Current Investments</button>
+    <button onclick="editModel()">Edit Model Portfolio</button>
+
+
+    <div id="screen"></div>
+
+
+    <script>
+
+        const API = "http://localhost:8080/api/portfolio"
+
+        async function editModel() {
+
+                const res = await fetch("http://localhost:8080/api/portfolio/model-funds")
+                const funds = await res.json()
+
+                let html = `<div class="container">
+<h2>Edit Recommended Plan</h2>
+
+<table>
+<tr>
+<th>Fund</th>
+<th>Asset Class</th>
+<th>Target %</th>
+</tr>
+`
+
+                funds.forEach(f => {
+
+                    html += `
+<tr>
+<td>${ f.fundName }</td>
+<td>${ f.assetClass }</td>
+<td>
+<input type="number" 
+id="pct-${ f.fundId }" 
+value="${ f.allocationPct }" 
+style="width:80px"/>
+</td>
+</tr>
+`
+                })
+
+                html += `</table>
+
+<button onclick="saveModel()">Save Plan</button>
+<p id="validation" style="color:red;"></p>
+
+</div>`
+
+                document.getElementById("screen").innerHTML = html
+            }
+
+        async function saveModel() {
+
+                const res = await fetch("http://localhost:8080/api/portfolio/model-funds")
+                const funds = await res.json()
+
+                let total = 0
+                let updates = []
+
+                funds.forEach(f => {
+
+                    const pct = Number(document.getElementById(`pct-${ f.fundId }`).value)
+
+                    total += pct
+
+                    updates.push({
+                        fundId: f.fundId,
+                        fundName: f.fundName,
+                        assetClass: f.assetClass,
+                        allocationPct: pct
+                    })
+                })
+
+                if (total !== 100) {
+
+                    document.getElementById("validation").innerText =
+                        "Total allocation must equal 100%"
+
+                    return
+                }
+
+                for (const fund of updates) {
+
+                    await fetch("http://localhost:8080/api/model-funds", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(fund)
+                    })
+                }
+
+                alert("Model portfolio updated!")
+
+                loadRebalance()
+            }
+
+
+        async function loadRebalance() {
+
+            const clientId = document.getElementById("clientId").value
+
+            const res = await fetch(`${ API }/${ clientId }/rebalance`)
+            const data = await res.json()
+
+            let buyTotal = 0
+            let sellTotal = 0
+
+            let html = `<div class="container">
+<h2>Rebalance Comparison</h2>
+
+<table>
+<tr>
+<th>Fund</th>
+<th>Current %</th>
+<th>Target %</th>
+<th>Drift</th>
+<th>Action</th>
+<th>Amount (₹)</th>
+</tr>
+`
+
+            data.forEach(f => {
+
+                if (f.action === "BUY") buyTotal += f.amount
+                if (f.action === "SELL") sellTotal += f.amount
+
+                html += `
+<tr>
+<td>${ f.fundName }</td>
+<td>${ f.currentPct.toFixed(2) }%</td>
+<td>${ f.targetPct }%</td>
+<td>${ f.drift.toFixed(2) }%</td>
+<td class="${ f.action === 'BUY' ? 'buy' : 'sell' }">${ f.action }</td>
+<td>₹ ${ f.amount.toFixed(0) }</td>
+</tr>
+`
+            })
+
+            html += `</table>`
+
+            html += `
+<div class="summary">
+Total BUY : ₹ ${ buyTotal.toFixed(0) } <br>
+Total SELL : ₹ ${ sellTotal.toFixed(0) } <br>
+Fresh Money Required : ₹ ${ (buyTotal - sellTotal).toFixed(0) }
+</div>
+`
+
+            html += `</div>`
+
+            document.getElementById("screen").innerHTML = html
+
+        }
+
+
+
+        async function loadHoldings() {
+
+            const clientId = document.getElementById("clientId").value
+
+            const res = await fetch(`${ API }/${ clientId }/holdings`)
+            const data = await res.json()
+
+            let total = 0
+
+            let html = `<div class="container">
+<h2>Amit's Current Investments</h2>
+
+<table>
+<tr>
+<th>Fund</th>
+<th>Current Value (₹)</th>
+</tr>
+`
+
+            data.forEach(h => {
+
+                total += h.currentValue
+
+                html += `
+<tr>
+<td>${ h.fundName }</td>
+<td>₹ ${ h.currentValue.toFixed(0) }</td>
+</tr>
+`
+            })
+
+            html += `</table>`
+
+            html += `
+<div class="summary">
+Total Portfolio Value : ₹ ${ total.toFixed(0) }
+</div>
+`
+
+            html += `</div>`
+
+            document.getElementById("screen").innerHTML = html
+
+        }
+
+    </script>
+
+</body>
+
+</html>
