@@ -20,7 +20,7 @@ public class PortfolioRepository {
 
         String sql = """
             SELECT holding_id, client_id, fund_id, fund_name, current_value
-            FROM client_holdings
+            FROM _client_holdings
             WHERE client_id = ?
         """;
 
@@ -35,7 +35,7 @@ public class PortfolioRepository {
 
         String sql = """
             SELECT fund_id, fund_name, asset_class, allocation_pct
-            FROM model_funds
+            FROM _model_funds
         """;
 
         return jdbc.query(

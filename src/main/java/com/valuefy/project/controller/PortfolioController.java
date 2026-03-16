@@ -12,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/portfolio")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class PortfolioController {
 
     private final PortfolioService service;
