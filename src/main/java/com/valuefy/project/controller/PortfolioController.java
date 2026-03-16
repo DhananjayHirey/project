@@ -30,19 +30,12 @@ public class PortfolioController {
 
         return service.getModelFunds();
     }
-
-    @RestController
-    @RequestMapping("/api/portfolio")
-    @RequiredArgsConstructor
-    public class PortfolioController {
-
-        private final PortfolioService service;
-
         @GetMapping("/{clientId}/rebalance")
         public List<RebalanceItemDTO> rebalance(
                 @PathVariable String clientId) {
 
             return service.getRebalance(clientId);
         }
-    }
+
+
 }
